@@ -32,22 +32,25 @@ const UsersController = {
    * Required fields: email, name, password
    */
   create: async (req, res) => {
-    const { email, name, password, status } = req.body || {};
-    if (!email || !name || !password) {
+    const { email, name, password, status, idHeadquarter } = req.body || {};
+
+    if (!email || !name || !password || !idHeadquarter) {
       return res
         .status(400)
-        .json({ message: 'email, name y password son obligatorios' });
+        .json({ message: 'email, name, password e idHeadquarter son obligatorios' });
     }
+
     try {
-      const created = await UsersService.create({ email, name, password, status });
+      const created = await UsersService.create({ email, name, password, status, idHeadquarter });
       res.status(201).json(created);
     } catch (e) {
-      // Handles Prisma unique constraint violation (email already exists)
       if (e && e.code === 'P2002')
         return res.status(409).json({ message: 'El email ya existe' });
       throw e;
     }
   },
+
+
 
   /**
    * Update user data by email.

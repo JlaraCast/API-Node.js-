@@ -2,22 +2,39 @@ const bcrypt = require('bcrypt');
 const { UsersRepository } = require('./users.repository');
 const jwt  = require('jsonwebtoken');
 const ApiError = require('../../utils/ApiError');
+const { HeadquarterUserRepository } = require('../headquarters/headquarterUser.repository');
 
 
 // UsersService contains business logic for user operations.
 // It interacts with UsersRepository for database actions and handles password hashing.
-const UsersService = {
-  // Returns a list of all users
-  list: () => UsersRepository.list(),
+  const UsersService = {
+    // Returns a list of all users
+    list: () => UsersRepository.list(),
 
-  // Retrieves a user by email
-  get: (email) => UsersRepository.findByEmail(email),
+    get: (email) => UsersRepository.findByEmail(email),
 
-  // Creates a new user, hashes the password before saving
-  create: async (data) => {
-    const hashed = await bcrypt.hash(data.password, 10);
-    return UsersRepository.create({ ...data, password: hashed });
-  },
+    create: async (data) => {
+      const hashed = await bcrypt.hash(data.password, 10);
+
+      // Crear usuario SIN idHeadquarter
+      const user = await UsersRepository.create({ 
+        email: data.email,
+        name: data.name,
+        status: data.status,
+        password: hashed
+      });
+
+      // Crear relación en HeadquarterUser
+      if (data.idHeadquarter) {
+        await HeadquarterUserRepository.create(
+          user.email, 
+          parseInt(data.idHeadquarter)
+        );
+      }
+
+      return user;
+    },
+  
 
   // Updates user data by email; hashes password if provided
   update: async (email, data) => {
